@@ -16,7 +16,7 @@ func worker(toMain chan<- string, toWorker <-chan string, wg *sync.WaitGroup) {
 	}
 	fmt.Println("done")
 	//close(toMain)
-	wg.Done()
+	//wg.Done()
 }
 
 func main() {
@@ -27,13 +27,14 @@ func main() {
 	go worker(toMain, toWorker, &wg)
 	toWorker <- "test"
 	for {
-		val, ok := <-toMain
-		if !ok {
-			fmt.Println("Channel closed!")
-			break
+		select {
+		case val := <-toMain:
+			fmt.Println(val)
+		// default works here if no communication is available
+		default:
+			// do idle work
 		}
-		fmt.Println(val)
 	}
-	wg.Wait()
+	//wg.Wait()
 
 }
