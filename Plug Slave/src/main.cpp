@@ -1,53 +1,61 @@
+/*********
+  Rui Santos
+  Complete project details at https://randomnerdtutorials.com/esp8266-nodemcu-access-point-ap-web-server/
+  
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files.
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+*********/
+
+// Import required libraries
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
-#include <espnow.h>
+#include <Hash.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 
-// Message struct with string for message
-typedef struct struct_message {
-  String msg;
-} struct_message;
+const char* ssid     = "ESP8266-Access-Point";
+const char* password = "123456789";
 
-// Holds mac address of master
-uint8_t broadcastAddress[] = {0x48, 0x55, 0x19, 0xDF, 0x29, 0xAD};
+// Create AsyncWebServer object on port 80
+AsyncWebServer server(80);
 
-// This is the receive function for the slave
-void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
-  struct_message myData;
-  memcpy(&myData, incomingData, sizeof(myData) );
-  Serial.println(myData.msg);
-}
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <input type="checkbox">
+  <h2>ESP8266 %DHT% Server</h2>
+</body>
+</html>)rawliteral";
 
 void setup(){
+  // Serial port for debugging purposes
   Serial.begin(115200);
-
-  // Init wifi
-  WiFi.mode(WIFI_STA);
-
-  // Init ESP-NOW
-  if (esp_now_init() != 0) {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-  }
   
-  // Once ESPNow is successfully Init, we will register for recv CB to
-  // get recv packer info
-  esp_now_set_self_role(ESP_NOW_ROLE_SLAVE);
-  esp_now_register_recv_cb(OnDataRecv);
+  Serial.print("Setting AP (Access Point)…");
+  // Remove the password parameter, if you want the AP (Access Point) to be open
+  WiFi.softAP(ssid, password);
+
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+
+  // Print ESP8266 Local IP Address
+  Serial.println(WiFi.localIP());
+
+    // Route for root / web page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/html", index_html);
+  });
+
+  // Start server
+  server.begin();
 }
  
-void loop(){
-  // Wait for serial
-  while (Serial.available() == 0) {} 
-  String incomingString = Serial.readString();
-  incomingString.trim();
-
-  Serial.println("Received Command '" + incomingString + "':");
-
-  if (incomingString == "mac") {
-    // 'mac' seen on serial, print mac address
-    Serial.print("ESP8266 Board MAC Address:  ");
-    Serial.println(WiFi.macAddress());
-  } else {
-    // error case, unrecognised command seen over serial
-    Serial.println("Command: '" + incomingString+ "' is not recognised!");
-  }
+void loop(){  
+  
 }
