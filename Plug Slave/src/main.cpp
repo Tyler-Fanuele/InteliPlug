@@ -14,12 +14,22 @@
 #include <Hash.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <WebSocketsServer.h>
 
 const char* ssid     = "ESP8266-Access-Point";
 const char* password = "123456789";
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
+
+WebSocketsServer webSocket = WebSocketsServer(81);
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
+  if (type == WStype_TEXT) {
+    String message = String((char*)payload);
+    Serial.println("Message: " + message);
+  }
+}
 
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
@@ -34,7 +44,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 
 void setup(){
   // Serial port for debugging purposes
-  Serial.begin(115200);
+  Serial.begin(9600);
   
   Serial.print("Setting AP (Access Point)…");
   // Remove the password parameter, if you want the AP (Access Point) to be open
@@ -54,8 +64,11 @@ void setup(){
 
   // Start server
   server.begin();
+
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
 }
  
 void loop(){  
-  
+  webSocket.loop();
 }
