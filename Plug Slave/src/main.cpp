@@ -28,6 +28,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
   if (type == WStype_TEXT) {
     String message = String((char*)payload);
     Serial.println("Message: " + message);
+    if (message == "ON") {
+      digitalWrite(16, HIGH);
+    } else if (message == "OFF") {
+      digitalWrite(16, LOW);
+    }
+    
   }
 }
 
@@ -67,6 +73,8 @@ void setup(){
 
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
+
+  pinMode(16, OUTPUT);
 }
  
 void loop(){  
