@@ -71,6 +71,7 @@ void setup(){
   // Start server
   server.begin();
 
+  // Begin Websocket
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
 
